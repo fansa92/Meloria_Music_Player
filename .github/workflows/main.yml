@@ -43,7 +43,7 @@ jobs:
         powershell -Command "Compress-Archive -Path portable-app\* -DestinationPath portable-app.zip"
 
     - name: 📦 Upload ZIP artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: flutter-windows-portable
         path: build/windows/runner/Release/portable-app.zip
