@@ -13,11 +13,14 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
 
-    - name: 🔧 Setup Flutter
+    - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
         channel: stable
-        flutter-version: 'latest'
+        flutter-version: '3.20.0'
+
+    - name: flutter --version
+      run: flutter --version
 
     - name: Enable Windows desktop support
       run: flutter config --enable-windows-desktop
