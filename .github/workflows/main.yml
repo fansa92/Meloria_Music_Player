@@ -38,7 +38,7 @@ jobs:
         powershell -Command "Compress-Archive -Path portable\* -DestinationPath portable.zip"
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Meloria_Windows_Portable
         path: build/windows/runner/Release/portable.zip
