@@ -26,19 +26,19 @@ jobs:
       run: flutter pub get
 
     - name: Build portable exe
-      run: flutter build windows --release --portable
+      run: flutter build windows
 
-    - name: Package portable zip
-      run: |
-        cd build/windows/runner/Release
-        mkdir portable
-        copy *.exe portable/
-        copy *.dll portable/
-        if exist data xcopy /E /I data portable\data
-        powershell -Command "Compress-Archive -Path portable\* -DestinationPath portable.zip"
+    # - name: Package portable zip
+    #   run: |
+    #     cd build/windows/runner/Release
+    #     mkdir portable
+    #     copy *.exe portable/
+    #     copy *.dll portable/
+    #     if exist data xcopy /E /I data portable\data
+    #     powershell -Command "Compress-Archive -Path portable\* -DestinationPath portable.zip"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: Meloria_Windows_Portable
-        path: build/windows/runner/Release/portable.zip
+        path: build/windows/runner/Release/*
