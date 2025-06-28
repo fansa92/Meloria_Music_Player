@@ -1,7 +1,7 @@
 name: music_player
 description: "Material You Music Player - Local music player with wonderful design"
 publish_to: 'none'
-version: 0.0.2
+version: 0.0.4
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -49,4 +49,12 @@ flutter:
     - family: MiSans-Bold
       fonts:
         - asset: lib/asset/fonts/MiSans-Bold.ttf
+          weight: 700
+    - family: 苹方
+      fonts:
+        - asset: lib/asset/fonts/苹方字体.ttf
+          weight: 700
+    - family: HarmonyOS-Sans
+      fonts:
+        - asset: lib/asset/fonts/HarmonyOS_Sans_SC_Bold.ttf
           weight: 700

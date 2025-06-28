@@ -152,6 +152,14 @@ class _MusicLibraryState extends State<MusicLibrary> {
                 Navigator.pop(context);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.new_releases_outlined),
+              title: const Text('按添加时间'),
+              onTap: () {
+                context.read<MusicProvider>().sortSongs('date');
+                Navigator.pop(context);
+              },
+            ),
           ],
         ),
       ),
@@ -576,12 +584,18 @@ class _MusicLibraryState extends State<MusicLibrary> {
         tooltip: '删除选中',
       ));
     } else {
-      actionsWidgets.add(IconButton(
-        icon: const Icon(Icons.add),
-        onPressed: () {
-          context.read<MusicProvider>().importMusic();
-        },
-        tooltip: '导入音乐',
+      actionsWidgets.add(Padding(
+        padding: const EdgeInsets.only(right: 8.0),
+        child: ElevatedButton.icon(
+          onPressed: () {
+            context.read<MusicProvider>().importMusic();
+          },
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('导入音乐'),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8), // Adjust padding if needed
+          ),
+        ),
       ));
       actionsWidgets.add(Consumer<MusicProvider>(
         builder: (context, musicProvider, child) {
@@ -603,6 +617,18 @@ class _MusicLibraryState extends State<MusicLibrary> {
           _showSortOptions(context);
         },
         tooltip: '排序',
+      ));
+      // 新增：排序方向切换按钮
+      actionsWidgets.add(Consumer<MusicProvider>(
+        builder: (context, musicProvider, child) {
+          return IconButton(
+            icon: Icon(musicProvider.sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+            onPressed: () {
+              musicProvider.toggleSortDirection();
+            },
+            tooltip: musicProvider.sortAscending ? '升序' : '降序',
+          );
+        },
       ));
     }
 
@@ -781,7 +807,6 @@ class SongListTile extends StatelessWidget {
           ],
         ),
       ),
-      const PopupMenuDivider(), // Optional: adds a visual separator
       const PopupMenuItem(
         value: 'song_info',
         child: Row(
@@ -839,6 +864,9 @@ class SongListTile extends StatelessWidget {
                 showMenu<String>(
                   context: context,
                   position: position,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12), // 添加圆角
+                  ),
                   items: _getPopupMenuItems(context),
                 ).then((String? value) {
                   if (value != null) {
@@ -1034,6 +1062,9 @@ class SongListTile extends StatelessWidget {
                     : PopupMenuButton<String>(
                         icon: const Icon(Icons.more_vert),
                         tooltip: '更多', // 修改悬停消息
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12), // 添加圆角
+                        ),
                         onSelected: (value) {
                           _handleMenuAction(context, value, song);
                         },

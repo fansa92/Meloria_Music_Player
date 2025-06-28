@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'duplicate_songs_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -76,6 +77,30 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          const Text('功能', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 2,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const DuplicateSongsScreen(),
+                  ),
+                );
+              },
+              child: const ListTile(
+                leading: Icon(Icons.library_music, color: Colors.deepOrange),
+                title: Text('重复歌曲管理'),
+                subtitle: Text('检测并清理音乐库中的重复歌曲'),
+                trailing: Icon(Icons.chevron_right),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
           const Text('关于', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Card(
@@ -98,10 +123,11 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       child: AboutDialog(
                         applicationName: 'Meloria Music Player',
-                        applicationVersion: 'v0.0.2',
+                        applicationVersion: 'v0.0.4',
                         applicationIcon: Icon(Icons.music_note, size: 40, color: theme.primaryColor),
                         children: [
-                          const Text('一个简洁美观的本地音乐播放器。\n作者：老官童鞋gogo\n\nv0.0.2版本更新内容：\n更新软件快捷键。可以在 设置-快捷键说明 查看具体内容。\n'),
+                          const Text(
+                              '一个简洁美观的本地音乐播放器。\n作者：老官童鞋gogo\n\nv0.0.4版本更新内容：\n1. 添加音乐库重复歌曲管理功能。\n2. 重新设计 统计 页面。\n3. 优化搜索界面的显示\n4. 优化右键菜单页面。\n'),
                           const SizedBox(height: 8),
                           const Text('作者的博客：'),
                           InkWell(
@@ -289,6 +315,10 @@ String _getCurrentFontFamilyText(BuildContext context) {
       return '系统字体';
     case FontFamily.miSans:
       return 'MiSans';
+    case FontFamily.apple:
+      return '苹方';
+    case FontFamily.harmonyosSans:
+      return 'HarmonyOS-Sans';
   }
 }
 
@@ -321,6 +351,30 @@ void _showFontFamilyDialog(BuildContext context) {
               title: const Text('MiSans'),
               subtitle: const Text('小米字体'),
               value: FontFamily.miSans,
+              groupValue: currentFont,
+              onChanged: (FontFamily? value) {
+                if (value != null) {
+                  themeProvider.updateFontFamily(value);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            RadioListTile<FontFamily>(
+              title: const Text('苹方'),
+              subtitle: const Text('苹果字体'),
+              value: FontFamily.apple,
+              groupValue: currentFont,
+              onChanged: (FontFamily? value) {
+                if (value != null) {
+                  themeProvider.updateFontFamily(value);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+            RadioListTile<FontFamily>(
+              title: const Text('HarmonyOS-Sans'),
+              subtitle: const Text('华为字体'),
+              value: FontFamily.harmonyosSans,
               groupValue: currentFont,
               onChanged: (FontFamily? value) {
                 if (value != null) {
