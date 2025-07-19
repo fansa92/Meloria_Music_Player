@@ -43,7 +43,10 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(playlistToEdit == null ? '创建歌单' : '重命名歌单'),
+          title: Text(
+            playlistToEdit == null ? '创建歌单' : '重命名歌单',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
           content: TextField(
             controller: _playlistNameController,
             decoration: const InputDecoration(hintText: '歌单名称'),
@@ -154,6 +157,8 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
       key: _PlaylistManagementScreenState.playlistListScaffoldKey, // Assign the key here
       appBar: AppBar(
         title: const Text('我的歌单'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: playlists.isEmpty
           ? const Center(
@@ -184,17 +189,10 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
                     },
                     onPlay: () {
                       if (playlist.songIds.isNotEmpty) {
-                        final songsInPlaylist = musicProvider.songs.where((s) => playlist.songIds.contains(s.id)).toList();
-                        if (songsInPlaylist.isNotEmpty) {
-                          musicProvider.playSong(songsInPlaylist.first);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('开始播放歌单: ${playlist.name}')),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('歌单 "${playlist.name}" 中的歌曲当前不可用。')),
-                          );
-                        }
+                        musicProvider.playPlaylist(playlist);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('开始播放歌单: ${playlist.name}')),
+                        );
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('歌单 "${playlist.name}" 为空。')),
@@ -225,17 +223,10 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
             onTap: () {
               Navigator.pop(bottomSheetBuildContext);
               if (playlist.songIds.isNotEmpty) {
-                final songsInPlaylist = musicProvider.songs.where((s) => playlist.songIds.contains(s.id)).toList();
-                if (songsInPlaylist.isNotEmpty) {
-                  musicProvider.playSong(songsInPlaylist.first);
-                  ScaffoldMessenger.of(itemContext).showSnackBar(
-                    SnackBar(content: Text('开始播放歌单: ${playlist.name}')),
-                  );
-                } else {
-                  ScaffoldMessenger.of(itemContext).showSnackBar(
-                    SnackBar(content: Text('歌单 "${playlist.name}" 中的歌曲当前不可用。')),
-                  );
-                }
+                musicProvider.playPlaylist(playlist);
+                ScaffoldMessenger.of(itemContext).showSnackBar(
+                  SnackBar(content: Text('开始播放歌单: ${playlist.name}')),
+                );
               } else {
                 ScaffoldMessenger.of(itemContext).showSnackBar(
                   SnackBar(content: Text('歌单 "${playlist.name}" 为空。')),
@@ -305,7 +296,7 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
                 });
               },
             ),
-          if (_isMultiSelectMode)
+          if (_isMultiSelectMode) ...[
             IconButton(
               icon: const Icon(Icons.close),
               tooltip: '退出批量管理',
@@ -316,6 +307,10 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
                 });
               },
             ),
+            SizedBox(
+              width: 15,
+            ),
+          ],
           if (!_isMultiSelectMode) ...[
             IconButton(
               icon: const Icon(Icons.edit_outlined),
@@ -332,7 +327,7 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
               tooltip: '播放全部',
               onPressed: () {
                 if (songsInPlaylist.isNotEmpty) {
-                  musicProvider.playSong(songsInPlaylist.first);
+                  musicProvider.playPlaylist(currentPlaylist);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('开始播放歌单: ${currentPlaylist.name}')),
                   );
@@ -342,6 +337,9 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
                   );
                 }
               },
+            ),
+            SizedBox(
+              width: 15,
             ),
           ]
         ],
@@ -406,7 +404,10 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
                                 final confirmed = await showDialog<bool>(
                                   context: context,
                                   builder: (dialogContext) => AlertDialog(
-                                    title: const Text('移除歌曲'),
+                                    title: Text(
+                                      '移除歌曲',
+                                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                                    ),
                                     content: Text('确定要从歌单 "${currentPlaylist.name}" 中移除歌曲 "${song.title}" 吗？'),
                                     actions: [
                                       TextButton(
@@ -445,7 +446,10 @@ class _PlaylistManagementScreenState extends State<PlaylistManagementScreen> {
                       final confirmed = await showDialog<bool>(
                         context: context,
                         builder: (dialogContext) => AlertDialog(
-                          title: const Text('批量删除歌曲'),
+                          title: Text(
+                            '批量移除歌曲',
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                          ),
                           content: Text('确定要从歌单 "${currentPlaylist.name}" 中移除所选的 ${_selectedSongIds.length} 首歌曲吗？'),
                           actions: [
                             TextButton(
@@ -566,12 +570,14 @@ class PlaylistCardItem extends StatelessWidget {
     }
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-      elevation: 2.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      elevation: 4.0,
+      shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16.0),
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Row(
@@ -679,7 +685,7 @@ class PlaylistSongCardItem extends StatelessWidget {
     final bool isCurrentlyPlaying = musicProvider.currentSong?.id == song.id && musicProvider.isPlaying;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+      margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 16.0),
       elevation: 2.0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: InkWell(
@@ -705,17 +711,19 @@ class PlaylistSongCardItem extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       song.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: isCurrentlyPlaying ? Theme.of(context).colorScheme.primary : null,
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      song.artist.isNotEmpty ? song.artist : '未知艺术家',
+                      song.artist,
                       style: Theme.of(context).textTheme.bodySmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -725,26 +733,21 @@ class PlaylistSongCardItem extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               if (isCurrentlyPlaying)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: MusicWaveform(color: Theme.of(context).colorScheme.primary, size: 20),
+                MusicWaveform(
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 24,
                 ),
+              const SizedBox(width: 8),
               Text(
                 _formatDuration(song.duration),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.outline),
               ),
+              const SizedBox(width: 8),
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
-                iconSize: 24,
-                tooltip: '从歌单中移除',
+                tooltip: '从歌单移除',
                 onPressed: onRemove,
               ),
-              // Optional: More actions button if needed in the future
-              // IconButton(
-              //   icon: const Icon(Icons.more_vert_outlined),
-              //   tooltip: '更多选项',
-              //   onPressed: () => onShowMenu(context),
-              // ),
             ],
           ),
         ),

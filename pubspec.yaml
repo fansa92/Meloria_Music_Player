@@ -1,7 +1,7 @@
 name: music_player
 description: "Material You Music Player - Local music player with wonderful design"
 publish_to: 'none'
-version: 0.0.4
+version: 0.1.2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -10,13 +10,15 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: any
-    # Audio related
+  # Audio related
   audioplayers: any
   file_picker: any
   path_provider: any  # Metadata reading
   audio_metadata_reader: any
   flutter_taggy: any # Added for reading embedded lyrics
   uuid: any # Added uuid package
+  win32: any # For Windows file creation time
+  ffi: any # Required for win32
 
   # State management
   provider: any

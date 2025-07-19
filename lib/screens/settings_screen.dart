@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'duplicate_songs_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -50,11 +51,15 @@ class SettingsScreen extends StatelessWidget {
               onTap: () {
                 _showPlayerBackgroundStyleDialog(context);
               },
-              child: ListTile(
-                leading: const Icon(Icons.photo_size_select_actual_outlined, color: Colors.purpleAccent),
-                title: const Text('播放页背景风格'),
-                subtitle: Text(_getCurrentPlayerBackgroundStyleText(context)), // Display current style
-                trailing: const Icon(Icons.chevron_right),
+              child: Consumer<ThemeProvider>(
+                builder: (context, themeProvider, child) {
+                  return ListTile(
+                    leading: const Icon(Icons.photo_size_select_actual_outlined, color: Colors.purpleAccent),
+                    title: const Text('播放页背景风格'),
+                    subtitle: Text(_getCurrentPlayerBackgroundStyleText(context)), // Display current style
+                    trailing: const Icon(Icons.chevron_right),
+                  );
+                },
               ),
             ),
           ),
@@ -68,11 +73,43 @@ class SettingsScreen extends StatelessWidget {
               onTap: () {
                 _showFontFamilyDialog(context);
               },
-              child: ListTile(
-                leading: const Icon(Icons.font_download, color: Colors.orangeAccent),
-                title: const Text('字体设置'),
-                subtitle: Text(_getCurrentFontFamilyText(context)),
-                trailing: const Icon(Icons.chevron_right),
+              child: Consumer<ThemeProvider>(
+                builder: (context, themeProvider, child) {
+                  return ListTile(
+                    leading: const Icon(Icons.font_download, color: Colors.orangeAccent),
+                    title: const Text('字体设置'),
+                    subtitle: Text(_getCurrentFontFamilyText(context)),
+                    trailing: const Icon(Icons.chevron_right),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 16), // Added spacing
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 2,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () async {
+                await _showLyricFontSizeDialog(context);
+                // 重新构建当前页面以显示更新后的字体大小
+                if (context.mounted) {
+                  (context as Element).markNeedsBuild();
+                }
+              },
+              child: FutureBuilder<double>(
+                future: _getLyricFontSize(),
+                builder: (context, snapshot) {
+                  final fontSize = snapshot.data ?? 1.0;
+                  return ListTile(
+                    leading: const Icon(Icons.text_format, color: Colors.teal),
+                    title: const Text('歌词字号'),
+                    subtitle: Text('当前: ${(fontSize * 100).round()}%'),
+                    trailing: const Icon(Icons.chevron_right),
+                  );
+                },
               ),
             ),
           ),
@@ -123,11 +160,10 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       child: AboutDialog(
                         applicationName: 'Meloria Music Player',
-                        applicationVersion: 'v0.0.4',
+                        applicationVersion: 'v0.1.2',
                         applicationIcon: Icon(Icons.music_note, size: 40, color: theme.primaryColor),
                         children: [
-                          const Text(
-                              '一个简洁美观的本地音乐播放器。\n作者：老官童鞋gogo\n\nv0.0.4版本更新内容：\n1. 添加音乐库重复歌曲管理功能。\n2. 重新设计 统计 页面。\n3. 优化搜索界面的显示\n4. 优化右键菜单页面。\n'),
+                          const Text('一个简洁美观的本地音乐播放器。\n作者：老官童鞋gogo\n\nv0.1.2版本更新内容：\n1. 优化歌曲进度条动画。\n'),
                           const SizedBox(height: 8),
                           const Text('作者的博客：'),
                           InkWell(
@@ -437,5 +473,142 @@ String _getCurrentThemeModeText(BuildContext context) {
       return '亮色模式';
     case ThemeMode.dark:
       return '暗黑模式';
+  }
+}
+
+// 获取当前歌词字体大小
+Future<double> _getLyricFontSize() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getDouble('lyric_font_size') ?? 1.0;
+}
+
+// 保存歌词字体大小
+Future<void> _saveLyricFontSize(double fontSize) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setDouble('lyric_font_size', fontSize);
+}
+
+// 显示歌词字号调整对话框
+Future<void> _showLyricFontSizeDialog(BuildContext context) async {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return FutureBuilder<double>(
+        future: _getLyricFontSize(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return _LyricFontSizeDialogContent(
+            initialSize: snapshot.data!,
+            onSave: _saveLyricFontSize,
+          );
+        },
+      );
+    },
+  );
+}
+
+// 单独的字体大小对话框内容组件
+class _LyricFontSizeDialogContent extends StatefulWidget {
+  final double initialSize;
+  final Future<void> Function(double) onSave;
+
+  const _LyricFontSizeDialogContent({
+    required this.initialSize,
+    required this.onSave,
+  });
+
+  @override
+  State<_LyricFontSizeDialogContent> createState() => _LyricFontSizeDialogContentState();
+}
+
+class _LyricFontSizeDialogContentState extends State<_LyricFontSizeDialogContent> {
+  late double currentSize;
+
+  @override
+  void initState() {
+    super.initState();
+    currentSize = widget.initialSize;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('歌词字号设置', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('当前字号: ${(currentSize * 100).round()}%'),
+          const SizedBox(height: 16),
+          Slider(
+            value: currentSize,
+            min: 0.5,
+            max: 2.0,
+            divisions: 15,
+            label: '${(currentSize * 100).round()}%',
+            onChanged: (value) {
+              setState(() {
+                currentSize = value;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    currentSize = (currentSize - 0.1).clamp(0.5, 2.0);
+                  });
+                },
+                child: const Text('缩小'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    currentSize = 1.0; // 重置为默认值
+                  });
+                },
+                child: const Text('重置'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    currentSize = (currentSize + 0.1).clamp(0.5, 2.0);
+                  });
+                },
+                child: const Text('放大'),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            await widget.onSave(currentSize);
+            if (context.mounted) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('歌词字号已保存'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          },
+          child: const Text('保存'),
+        ),
+      ],
+    );
   }
 }
